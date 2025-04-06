@@ -11,15 +11,9 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body>    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Custom Script -->
-    <script src="./script.js"></script>
-</body>
+<body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="#"><i class="bi bi-wallet2"></i> Monevment</a>
@@ -27,7 +21,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link active" href="#transactions"><i class="bi bi-cash"></i> 거래 내역</a>
                     </li>
@@ -47,3 +41,324 @@
             </div>
         </div>
     </nav>
+
+    <main class="container mt-4">
+        <!-- 거래 내역 섹션 -->
+        <section id="transactions" class="section active">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-cash"></i> 거래 내역</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card card-lg">
+                                <div class="card-body">
+                                    <h6 class="mb-4">새 거래 등록</h6>
+                                    <form id="transactionForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">거래 유형</label>
+                                            <select class="form-select" name="type" required>
+                                                <option value="income">수입</option>
+                                                <option value="expense">지출</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">카테고리</label>
+                                            <select class="form-select" name="category" required>
+                                                <optgroup label="수입">
+                                                    <option value="project">프로젝트 수입</option>
+                                                    <option value="consulting">컨설팅</option>
+                                                    <option value="other">기타 수입</option>
+                                                </optgroup>
+                                                <optgroup label="지출">
+                                                    <option value="software">소프트웨어 구독</option>
+                                                    <option value="hardware">하드웨어</option>
+                                                    <option value="office">사무용품</option>
+                                                    <option value="marketing">마케팅</option>
+                                                    <option value="other">기타 지출</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">금액</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="amount" required>
+                                                <select class="form-select" name="currency" style="max-width: 100px;">
+                                                    <option value="KRW">KRW</option>
+                                                    <option value="USD">USD</option>
+                                                    <option value="EUR">EUR</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">프로젝트</label>
+                                            <select class="form-select" name="project">
+                                                <option value="">프로젝트 선택</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">메모</label>
+                                            <textarea class="form-control" name="description" rows="2"></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">영수증</label>
+                                            <input type="file" class="form-control" name="receipt" accept="image/*">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">저장</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-lg">
+                                <div class="card-body">
+                                    <h6 class="mb-4">최근 거래 내역</h6>
+                                    <div id="transactionList" class="list-group"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 프로젝트 섹션 -->
+        <section id="projects" class="section">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-folder"></i> 프로젝트</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card card-lg">
+                                <div class="card-body">
+                                    <h6 class="mb-4">새 프로젝트 등록</h6>
+                                    <form id="projectForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">프로젝트명</label>
+                                            <input type="text" class="form-control" name="name" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">고객사</label>
+                                            <select class="form-select" name="client" required>
+                                                <option value="">고객사 선택</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">시작일</label>
+                                            <input type="date" class="form-control" name="startDate" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">종료일</label>
+                                            <input type="date" class="form-control" name="endDate">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">예산</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="budget" required>
+                                                <select class="form-select" name="currency" style="max-width: 100px;">
+                                                    <option value="KRW">KRW</option>
+                                                    <option value="USD">USD</option>
+                                                    <option value="EUR">EUR</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">시급</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="hourlyRate" required>
+                                                <select class="form-select" name="currency" style="max-width: 100px;">
+                                                    <option value="KRW">KRW</option>
+                                                    <option value="USD">USD</option>
+                                                    <option value="EUR">EUR</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">등록</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-lg">
+                                <div class="card-body">
+                                    <h6 class="mb-4">프로젝트 목록</h6>
+                                    <div id="projectList" class="list-group"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 고객 관리 섹션 -->
+        <section id="clients" class="section">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-people"></i> 고객 관리</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card card-lg">
+                                <div class="card-body">
+                                    <h6 class="mb-4">새 고객 등록</h6>
+                                    <form id="clientForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">고객사명</label>
+                                            <input type="text" class="form-control" name="name" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">담당자</label>
+                                            <input type="text" class="form-control" name="contact" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">이메일</label>
+                                            <input type="email" class="form-control" name="email" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">연락처</label>
+                                            <input type="tel" class="form-control" name="phone" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">주소</label>
+                                            <textarea class="form-control" name="address" rows="2"></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">결제 조건</label>
+                                            <select class="form-select" name="paymentTerms" required>
+                                                <option value="immediate">즉시 결제</option>
+                                                <option value="15days">15일</option>
+                                                <option value="30days">30일</option>
+                                                <option value="45days">45일</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">등록</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-lg">
+                                <div class="card-body">
+                                    <h6 class="mb-4">고객 목록</h6>
+                                    <div id="clientList" class="list-group"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 수익성 분석 섹션 -->
+        <section id="reports" class="section">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-graph-up"></i> 수익성 분석</h5>
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <div class="card card-lg">
+                                <div class="card-body">
+                                    <h6 class="mb-4">프로젝트별 수익성</h6>
+                                    <div class="chart-container">
+                                        <canvas id="projectProfitChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-lg">
+                                <div class="card-body">
+                                    <h6 class="mb-4">월별 수입/지출</h6>
+                                    <div class="chart-container">
+                                        <canvas id="monthlyChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-lg">
+                                <div class="card-body">
+                                    <h6 class="mb-4">카테고리별 지출</h6>
+                                    <div class="chart-container">
+                                        <canvas id="categoryChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 인보이스 섹션 -->
+        <section id="invoices" class="section">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-receipt"></i> 인보이스</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card card-lg">
+                                <div class="card-body">
+                                    <h6 class="mb-4">새 인보이스 발행</h6>
+                                    <form id="invoiceForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">고객사</label>
+                                            <select class="form-select" name="client" required>
+                                                <option value="">고객사 선택</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">프로젝트</label>
+                                            <select class="form-select" name="project" required>
+                                                <option value="">프로젝트 선택</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">발행일</label>
+                                            <input type="date" class="form-control" name="issueDate" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">마감일</label>
+                                            <input type="date" class="form-control" name="dueDate" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">금액</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" name="amount" required>
+                                                <select class="form-select" name="currency" style="max-width: 100px;">
+                                                    <option value="KRW">KRW</option>
+                                                    <option value="USD">USD</option>
+                                                    <option value="EUR">EUR</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">설명</label>
+                                            <textarea class="form-control" name="description" rows="2"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">발행</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-lg">
+                                <div class="card-body">
+                                    <h6 class="mb-4">인보이스 목록</h6>
+                                    <div id="invoiceList" class="list-group"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Script -->
+    <script src="script.js"></script>
+</body>
+</html>
