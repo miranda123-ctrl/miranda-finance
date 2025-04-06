@@ -1,10 +1,22 @@
-// 데이터 배열 초기화
-let transactions = [];
-let projects = [];
-let clients = [];
-let invoices = [];
+// 데이터 저장소
+let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+let projects = JSON.parse(localStorage.getItem('projects')) || [];
+let clients = JSON.parse(localStorage.getItem('clients')) || [];
+let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
 
-// 섹션 전환
+// DOM이 로드되면 실행
+document.addEventListener('DOMContentLoaded', () => {
+    // 초기 데이터 로드
+    updateTransactionList();
+    updateProjectList();
+    updateClientList();
+    updateInvoiceList();
+    updateProjectSelects();
+    updateClientSelects();
+    initializeCharts();
+});
+
+// 네비게이션 이벤트 리스너
 document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
@@ -24,53 +36,18 @@ document.querySelectorAll('.nav-link').forEach(link => {
         });
         link.classList.add('active');
         
-        // 선택된 섹션의 데이터만 업데이트
-        switch(targetId) {
-            case 'transactions':
-                updateTransactionList();
-                break;
-            case 'projects':
-                updateProjectList();
-                updateProjectSelects();
-                break;
-            case 'clients':
-                updateClientList();
-                updateClientSelects();
-                break;
-            case 'reports':
-                updateCharts();
-                break;
-            case 'invoices':
-                updateInvoiceList();
-                break;
+        // 차트 업데이트
+        if (targetId === 'reports') {
+            updateCharts();
         }
     });
 });
 
-// 초기 섹션 표시 (거래 내역만)
-document.addEventListener('DOMContentLoaded', () => {
-    // 모든 섹션 숨기기
-    document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
-    });
-    
-    // 거래 내역 섹션 표시
-    document.getElementById('transactions').classList.add('active');
-    
-    // 초기 데이터 로드
-    updateTransactionList();
-    updateProjectList();
-    updateClientList();
-    updateInvoiceList();
-    updateCharts();
-    updateProjectSelects();
-    updateClientSelects();
-});
-
-// 거래 저장
+// 거래 내역 폼 제출
 document.getElementById('transactionForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    
     const transaction = {
         id: Date.now(),
         type: formData.get('type'),
@@ -79,19 +56,22 @@ document.getElementById('transactionForm').addEventListener('submit', (e) => {
         currency: formData.get('currency'),
         project: formData.get('project'),
         description: formData.get('description'),
-        date: new Date().toISOString().split('T')[0],
-        receipt: formData.get('receipt')
+        date: new Date().toISOString().split('T')[0]
     };
     
-    transactions.push(transaction);
+    transactions.unshift(transaction);
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    
     updateTransactionList();
+    updateCharts();
     e.target.reset();
 });
 
-// 프로젝트 저장
+// 프로젝트 폼 제출
 document.getElementById('projectForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    
     const project = {
         id: Date.now(),
         name: formData.get('name'),
@@ -103,16 +83,19 @@ document.getElementById('projectForm').addEventListener('submit', (e) => {
         hourlyRate: parseFloat(formData.get('hourlyRate'))
     };
     
-    projects.push(project);
+    projects.unshift(project);
+    localStorage.setItem('projects', JSON.stringify(projects));
+    
     updateProjectList();
     updateProjectSelects();
     e.target.reset();
 });
 
-// 고객 저장
+// 고객 폼 제출
 document.getElementById('clientForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    
     const client = {
         id: Date.now(),
         name: formData.get('name'),
@@ -123,16 +106,19 @@ document.getElementById('clientForm').addEventListener('submit', (e) => {
         paymentTerms: formData.get('paymentTerms')
     };
     
-    clients.push(client);
+    clients.unshift(client);
+    localStorage.setItem('clients', JSON.stringify(clients));
+    
     updateClientList();
     updateClientSelects();
     e.target.reset();
 });
 
-// 인보이스 저장
+// 인보이스 폼 제출
 document.getElementById('invoiceForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    
     const invoice = {
         id: Date.now(),
         client: formData.get('client'),
@@ -145,36 +131,43 @@ document.getElementById('invoiceForm').addEventListener('submit', (e) => {
         status: 'pending'
     };
     
-    invoices.push(invoice);
+    invoices.unshift(invoice);
+    localStorage.setItem('invoices', JSON.stringify(invoices));
+    
     updateInvoiceList();
     e.target.reset();
 });
 
-// 거래 내역 업데이트
+// 거래 내역 목록 업데이트
 function updateTransactionList() {
     const list = document.getElementById('transactionList');
     list.innerHTML = '';
     
-    transactions.sort((a, b) => new Date(b.date) - new Date(a.date))
-        .forEach(transaction => {
-            const item = document.createElement('div');
-            item.className = 'list-group-item';
-            item.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1">${transaction.description || '거래'}</h6>
-                        <small class="text-muted">${transaction.date}</small>
-                    </div>
-                    <div class="text-end">
-                        <span class="badge ${transaction.type === 'income' ? 'bg-success' : 'bg-danger'}">
-                            ${formatCurrency(transaction.amount)} ${transaction.currency}
-                        </span>
-                        <div class="text-muted small">${transaction.category}</div>
-                    </div>
+    transactions.forEach(transaction => {
+        const item = document.createElement('div');
+        item.className = 'list-group-item';
+        
+        const project = projects.find(p => p.id === parseInt(transaction.project));
+        
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">${transaction.description || '(설명 없음)'}</h6>
+                    <small class="text-muted">
+                        ${project ? project.name : ''} · ${transaction.date}
+                    </small>
                 </div>
-            `;
-            list.appendChild(item);
-        });
+                <div class="text-end">
+                    <span class="badge ${transaction.type === 'income' ? 'bg-success' : 'bg-danger'}">
+                        ${formatCurrency(transaction.amount)} ${transaction.currency}
+                    </span>
+                    <div class="text-muted small">${transaction.category}</div>
+                </div>
+            </div>
+        `;
+        
+        list.appendChild(item);
+    });
 }
 
 // 프로젝트 목록 업데이트
@@ -183,23 +176,29 @@ function updateProjectList() {
     list.innerHTML = '';
     
     projects.forEach(project => {
-        const client = clients.find(c => c.id === project.client);
+        const client = clients.find(c => c.id === parseInt(project.client));
         const item = document.createElement('div');
         item.className = 'list-group-item';
+        
         item.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h6 class="mb-1">${project.name}</h6>
-                    <small class="text-muted">${client ? client.name : '고객 없음'}</small>
+                    <small class="text-muted">
+                        ${client ? client.name : '고객사 없음'}
+                    </small>
                 </div>
                 <div class="text-end">
                     <span class="badge bg-primary">
                         ${formatCurrency(project.budget)} ${project.currency}
                     </span>
-                    <div class="text-muted small">${project.startDate} ~ ${project.endDate || '진행중'}</div>
+                    <div class="text-muted small">
+                        ${project.startDate} ~ ${project.endDate || '진행중'}
+                    </div>
                 </div>
             </div>
         `;
+        
         list.appendChild(item);
     });
 }
@@ -212,6 +211,7 @@ function updateClientList() {
     clients.forEach(client => {
         const item = document.createElement('div');
         item.className = 'list-group-item';
+        
         item.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -219,11 +219,12 @@ function updateClientList() {
                     <small class="text-muted">${client.contact}</small>
                 </div>
                 <div class="text-end">
-                    <span class="badge bg-info">${client.paymentTerms}</span>
                     <div class="text-muted small">${client.email}</div>
+                    <div class="text-muted small">${client.phone}</div>
                 </div>
             </div>
         `;
+        
         list.appendChild(item);
     });
 }
@@ -234,91 +235,119 @@ function updateInvoiceList() {
     list.innerHTML = '';
     
     invoices.forEach(invoice => {
-        const client = clients.find(c => c.id === invoice.client);
-        const project = projects.find(p => p.id === invoice.project);
+        const client = clients.find(c => c.id === parseInt(invoice.client));
+        const project = projects.find(p => p.id === parseInt(invoice.project));
         const item = document.createElement('div');
         item.className = 'list-group-item';
+        
         item.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h6 class="mb-1">${project ? project.name : '프로젝트 없음'}</h6>
-                    <small class="text-muted">${client ? client.name : '고객 없음'}</small>
+                    <small class="text-muted">
+                        ${client ? client.name : '고객사 없음'} · ${invoice.issueDate}
+                    </small>
                 </div>
                 <div class="text-end">
-                    <span class="badge ${getStatusColor(invoice.status)}">${invoice.status}</span>
-                    <div class="text-muted small">${formatCurrency(invoice.amount)} ${invoice.currency}</div>
+                    <span class="badge ${getStatusColor(invoice.status)}">
+                        ${formatCurrency(invoice.amount)} ${invoice.currency}
+                    </span>
+                    <div class="text-muted small">마감일: ${invoice.dueDate}</div>
                 </div>
             </div>
         `;
+        
         list.appendChild(item);
     });
 }
 
 // 프로젝트 선택 옵션 업데이트
 function updateProjectSelects() {
-    const selects = document.querySelectorAll('select[name="project"]');
-    selects.forEach(select => {
+    document.querySelectorAll('select[name="project"]').forEach(select => {
+        const currentValue = select.value;
         select.innerHTML = '<option value="">프로젝트 선택</option>';
+        
         projects.forEach(project => {
             const option = document.createElement('option');
             option.value = project.id;
             option.textContent = project.name;
             select.appendChild(option);
         });
+        
+        if (currentValue) {
+            select.value = currentValue;
+        }
     });
 }
 
 // 고객 선택 옵션 업데이트
 function updateClientSelects() {
-    const selects = document.querySelectorAll('select[name="client"]');
-    selects.forEach(select => {
+    document.querySelectorAll('select[name="client"]').forEach(select => {
+        const currentValue = select.value;
         select.innerHTML = '<option value="">고객사 선택</option>';
+        
         clients.forEach(client => {
             const option = document.createElement('option');
             option.value = client.id;
             option.textContent = client.name;
             select.appendChild(option);
         });
+        
+        if (currentValue) {
+            select.value = currentValue;
+        }
     });
 }
 
-// 차트 업데이트
-function updateCharts() {
+// 차트 초기화 및 업데이트
+function initializeCharts() {
     // 프로젝트별 수익성 차트
     const projectProfitCtx = document.getElementById('projectProfitChart').getContext('2d');
-    new Chart(projectProfitCtx, {
+    window.projectProfitChart = new Chart(projectProfitCtx, {
         type: 'bar',
         data: {
-            labels: projects.map(p => p.name),
+            labels: [],
             datasets: [{
-                label: '예산',
-                data: projects.map(p => p.budget),
-                backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                label: '수익',
+                data: [],
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
         }
     });
 
     // 월별 수입/지출 차트
     const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-    new Chart(monthlyCtx, {
+    window.monthlyChart = new Chart(monthlyCtx, {
         type: 'line',
         data: {
-            labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
-            datasets: [{
-                label: '수입',
-                data: [1200000, 1900000, 3000000, 5000000, 2000000, 3000000],
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1
-            }, {
-                label: '지출',
-                data: [800000, 1200000, 1500000, 2000000, 1000000, 1500000],
-                borderColor: 'rgb(255, 99, 132)',
-                tension: 0.1
-            }]
+            labels: [],
+            datasets: [
+                {
+                    label: '수입',
+                    data: [],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    tension: 0.1,
+                    fill: false
+                },
+                {
+                    label: '지출',
+                    data: [],
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    tension: 0.1,
+                    fill: false
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -328,12 +357,12 @@ function updateCharts() {
 
     // 카테고리별 지출 차트
     const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-    new Chart(categoryCtx, {
-        type: 'pie',
+    window.categoryChart = new Chart(categoryCtx, {
+        type: 'doughnut',
         data: {
-            labels: ['소프트웨어', '하드웨어', '사무용품', '마케팅', '기타'],
+            labels: [],
             datasets: [{
-                data: [3000000, 2000000, 1000000, 1500000, 500000],
+                data: [],
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.5)',
                     'rgba(54, 162, 235, 0.5)',
@@ -350,12 +379,63 @@ function updateCharts() {
     });
 }
 
-// 통화 포맷팅
+// 차트 데이터 업데이트
+function updateCharts() {
+    // 프로젝트별 수익성 업데이트
+    const projectData = projects.map(project => {
+        const income = transactions
+            .filter(t => t.project === project.id.toString() && t.type === 'income')
+            .reduce((sum, t) => sum + t.amount, 0);
+        const expenses = transactions
+            .filter(t => t.project === project.id.toString() && t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0);
+        return {
+            name: project.name,
+            profit: income - expenses
+        };
+    });
+
+    window.projectProfitChart.data.labels = projectData.map(p => p.name);
+    window.projectProfitChart.data.datasets[0].data = projectData.map(p => p.profit);
+    window.projectProfitChart.update();
+
+    // 월별 수입/지출 업데이트
+    const months = getLastSixMonths();
+    const monthlyData = months.map(month => {
+        const monthTransactions = transactions.filter(t => t.date.startsWith(month));
+        return {
+            income: monthTransactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + t.amount, 0),
+            expenses: monthTransactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0)
+        };
+    });
+
+    window.monthlyChart.data.labels = months.map(formatMonth);
+    window.monthlyChart.data.datasets[0].data = monthlyData.map(d => d.income);
+    window.monthlyChart.data.datasets[1].data = monthlyData.map(d => d.expenses);
+    window.monthlyChart.update();
+
+    // 카테고리별 지출 업데이트
+    const expensesByCategory = {};
+    transactions
+        .filter(t => t.type === 'expense')
+        .forEach(t => {
+            expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
+        });
+
+    window.categoryChart.data.labels = Object.keys(expensesByCategory);
+    window.categoryChart.data.datasets[0].data = Object.values(expensesByCategory);
+    window.categoryChart.update();
+}
+
+// 유틸리티 함수들
 function formatCurrency(amount) {
     return new Intl.NumberFormat('ko-KR').format(amount);
 }
 
-// 상태에 따른 배지 색상
 function getStatusColor(status) {
     switch(status) {
         case 'paid': return 'bg-success';
@@ -363,4 +443,21 @@ function getStatusColor(status) {
         case 'overdue': return 'bg-danger';
         default: return 'bg-secondary';
     }
+}
+
+function getLastSixMonths() {
+    const months = [];
+    const date = new Date();
+    for (let i = 0; i < 6; i++) {
+        const month = date.getMonth() - i;
+        const year = date.getFullYear() + Math.floor(month / 12);
+        const adjustedMonth = ((month % 12) + 12) % 12;
+        months.unshift(`${year}-${String(adjustedMonth + 1).padStart(2, '0')}`);
+    }
+    return months;
+}
+
+function formatMonth(yearMonth) {
+    const [year, month] = yearMonth.split('-');
+    return `${year}년 ${month}월`;
 }
